@@ -127,8 +127,9 @@ string uc_explist(string const initialState, string const goalState, int& pathLe
 	
 //***********************************************************************************************************
 	actualRunningTime = ((float)(clock() - startTime)/CLOCKS_PER_SEC);
-	path = "DDRRLLLUUURDLUDURDLUU"; //this is just a dummy path for testing the function
-	pathLength = path.size();
+	//path = "DDRRLLLUUURDLUDURDLUU"; //this is just a dummy path for testing the function
+	//pathLength = path.size();
+    cout << "Plan of action = " << path << endl;
 	return path;		
 		
 }
