@@ -666,7 +666,7 @@ try{
         if (algorithmSelected == "uc_explist") {
 
             path = uc_explist(initialState, goalState, pathLength, numOfStateExpansions, maxQLength, actualRunningTime, numOfDeletionsFromMiddleOfHeap, numOfLocalLoopsAvoided, numOfAttemptedNodeReExpansions);
-
+           
         }
        
         else if (algorithmSelected == "astar_explist_misplacedtiles") {
