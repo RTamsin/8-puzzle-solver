@@ -34,6 +34,30 @@ struct Node {
     }
 };
 
+bool isValid(int x, int y) {
+    return (x >= 0 && x < PUZZLE_SIZE && y >= 0 && y < PUZZLE_SIZE);
+}
+
+vector<Node> generateSuccessors(const Node &node) {
+    vector<Node> successors;
+    int pos = node.state.find('0');
+    int x = pos / PUZZLE_SIZE;
+    int y = pos % PUZZLE_SIZE;
+
+    for (int i = 0; i < NUM_MOVES; ++i) {
+        int newX = x + DX[i];
+        int newY = y + DY[i];
+        if (isValid(newX, newY)) {
+            int newPos = newX * PUZZLE_SIZE + newY;
+            string newState = node.state;
+            swap(newState[pos], newState[newPos]);
+            string newPath = node.path + (i == 0 ? 'U' : (i == 1 ? 'R' : (i == 2 ? 'D' : 'L')));
+            successors.emplace_back(newState, newPath, node.cost + 1, 0);
+        }
+    }
+    return successors;
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 //
@@ -69,7 +93,7 @@ string uc_explist(string const initialState, string const goalState, int& pathLe
     set<string> closedSet;
     int numDeletions = 0;
 
-     openQueue.emplace(initialState, "", 0, 0);
+    openQueue.emplace(initialState, "", 0, 0);
     maxQLength = 0;
     numOfStateExpansions = 0;
 
@@ -99,7 +123,7 @@ string uc_explist(string const initialState, string const goalState, int& pathLe
                 ++numDeletions;
             }
         }
-	
+    }
 	
 //***********************************************************************************************************
 	actualRunningTime = ((float)(clock() - startTime)/CLOCKS_PER_SEC);
@@ -150,26 +174,3 @@ string aStar_ExpandedList(string const initialState, string const goalState, int
 		
 }
 
-vector<Node> generateSuccessors(const Node &node) {
-    std::vector<Node> successors;
-    int pos = node.state.find('0');
-    int x = pos / PUZZLE_SIZE;
-    int y = pos % PUZZLE_SIZE;
-
-    for (int i = 0; i < NUM_MOVES; ++i) {
-        int newX = x + DX[i];
-        int newY = y + DY[i];
-        if (isValid(newX, newY)) {
-            int newPos = newX * PUZZLE_SIZE + newY;
-            std::string newState = node.state;
-            std::swap(newState[pos], newState[newPos]);
-            std::string newPath = node.path + (i == 0 ? 'U' : (i == 1 ? 'R' : (i == 2 ? 'D' : 'L')));
-            successors.emplace_back(newState, newPath, node.cost + 1, 0);
-        }
-    }
-    return successors;
-}
-
-bool isValid(int x, int y) {
-    return (x >= 0 && x < PUZZLE_SIZE && y >= 0 && y < PUZZLE_SIZE);
-}
