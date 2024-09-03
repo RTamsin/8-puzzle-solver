@@ -80,7 +80,7 @@ string aStar_ExpandedList(string const initialState, string const goalState, int
 	
 	
 //***********************************************************************************************************
-	actualRunningTime = ((float)(clock() - startTime)/CLOCKS_PER_SEC);
+	actualRunningTime = ((float)(clock() - startTime)/CLOCKS_PER_SEC);                         //this seems to always return null look at it later
 	path = "DDRRLLLUUURDLUDURDLUU"; //this is just a dummy path for testing the function
 	pathLength = path.size();
 	return path;		
