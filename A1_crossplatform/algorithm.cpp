@@ -17,8 +17,8 @@ using namespace std;
 const int PUZZLE_SIZE = 3;
 const int NUM_MOVES = 4;
 
-const vector<int> DX = {-1, 0, 1, 0};
-const vector<int> DY = {0, 1, 0, -1};
+const vector<int> DX = {0, 1, 0, -1};
+const vector<int> DY = {1, 0, -1, 0};
 
 struct Node {
     string state;
@@ -51,7 +51,7 @@ vector<Node> generateSuccessors(const Node &node) {
             int newPos = newX * PUZZLE_SIZE + newY;
             string newState = node.state;
             swap(newState[pos], newState[newPos]);
-            string newPath = node.path + (i == 0 ? 'U' : (i == 1 ? 'R' : (i == 2 ? 'D' : 'L')));
+            string newPath = node.path + (i == 0 ? 'R' : (i == 1 ? 'D' : (i == 2 ? 'L' : 'U')));
             successors.emplace_back(newState, newPath, node.cost + 1, 0);
         }
     }
@@ -91,7 +91,7 @@ string uc_explist(string const initialState, string const goalState, int& pathLe
 
     priority_queue<Node, vector<Node>, greater<Node>> openQueue;
     set<string> closedSet;
-    int numDeletions = 0;
+    
 
     openQueue.emplace(initialState, "", 0, 0);
     maxQLength = 0;
@@ -109,18 +109,19 @@ string uc_explist(string const initialState, string const goalState, int& pathLe
             return current.path;
         }
 
-        if (closedSet.find(current.state) != closedSet.end()) {
+        if (closedSet.find(current.state) != closedSet.end()) {     //redundent
             continue;
         }
         closedSet.insert(current.state);
         ++numOfStateExpansions;
 
         vector<Node> successors = generateSuccessors(current);
+        
         for (auto &successor : successors) {
             if (closedSet.find(successor.state) == closedSet.end()) {
                 openQueue.push(successor);
             } else {
-                ++numDeletions;
+                ++numOfDeletionsFromMiddleOfHeap;
             }
         }
     }
