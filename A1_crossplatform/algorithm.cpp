@@ -31,6 +31,7 @@ struct PuzzleState {
 
     PuzzleState(string s, string p, int g_cost, int h_cost) : state(s), path(p), g(g_cost), h(h_cost) {}
 
+    // Priority is based on f(n) = g(n) + h(n)
     bool operator<(const PuzzleState &other) const {
         return (g + h) > (other.g + other.h); // min-heap
     }
@@ -63,6 +64,29 @@ vector<pair<string, char>> get_successors(const string &state) {
     }
 
     return successors;
+}
+
+// Heuristic function for Misplaced Tiles
+int misplacedTilesF(const string& state, const string& goalState) {
+    int misplaced = 0;
+    for (int i = 0; i < 9; ++i) {
+        if (state[i] != '0' && state[i] != goalState[i]) {
+            misplaced++;
+        }
+    }
+    return misplaced;
+}
+
+// Heuristic function for Manhattan Distance
+int manhattanDistanceF(const string& state, const string& goalState) {
+    int distance = 0;
+    for (int i = 0; i < 9; ++i) {
+        if (state[i] != '0') {
+            int goalIndex = goalState.find(state[i]);
+            distance += abs(i / 3 - goalIndex / 3) + abs(i % 3 - goalIndex % 3);
+        }
+    }
+    return distance;
 }
 
 
@@ -144,32 +168,90 @@ string uc_explist(string const initialState, string const goalState, int& pathLe
 //
 ////////////////////////////////////////////////////////////////////////////////////////////
 string aStar_ExpandedList(string const initialState, string const goalState, int& pathLength, int &numOfStateExpansions, int& maxQLength,
-                               float &actualRunningTime, int &numOfDeletionsFromMiddleOfHeap, int &numOfLocalLoopsAvoided, int &numOfAttemptedNodeReExpansions, heuristicFunction heuristic){
+                    float &actualRunningTime, int &numOfDeletionsFromMiddleOfHeap, int &numOfLocalLoopsAvoided, int &numOfAttemptedNodeReExpansions, heuristicFunction heuristic){
 											 
-   string path;
-   clock_t startTime;
+    string path;
+    clock_t startTime = clock();;
    
-   numOfDeletionsFromMiddleOfHeap=0;
-   numOfLocalLoopsAvoided=0;
-   numOfAttemptedNodeReExpansions=0;
+    // Priority queue (min-heap) for open list
+    vector<PuzzleState> openList;
+    make_heap(openList.begin(), openList.end());
+    set<string> closedList;
+
+    pathLength = 0;
+    numOfStateExpansions = 0;
+    maxQLength = 0;
+
+    //calc start node h value
+    int startHeuristic;
+    //if misplasedTiles
+    if (heuristic == 0){
+        startHeuristic = misplacedTilesF(initialState, goalState);
+    }
+    //if manhattanDistance
+    else if (heuristic==1){
+        startHeuristic = manhattanDistanceF(initialState, goalState);
+    }
 
 
-    // cout << "------------------------------" << endl;
-    // cout << "<<aStar_ExpandedList>>" << endl;
-    // cout << "------------------------------" << endl;
-	actualRunningTime=0.0;	
-	startTime = clock();
-	srand(time(NULL)); //RANDOM NUMBER GENERATOR - ONLY FOR THIS DEMO.  YOU REALLY DON'T NEED THIS! DISABLE THIS STATEMENT.
-	maxQLength= rand() % 200; //AT THE MOMENT, THIS IS JUST GENERATING SOME DUMMY VALUE.  YOUR ALGORITHM IMPLEMENTATION SHOULD COMPUTE THIS PROPERLY.
-	numOfStateExpansions = rand() % 200; //AT THE MOMENT, THIS IS JUST GENERATING SOME DUMMY VALUE.  YOUR ALGORITHM IMPLEMENTATION SHOULD COMPUTE THIS PROPERLY
+    // Push initial state into the heap with f(n) = g(n) + h(n)
+    PuzzleState startNode = PuzzleState(initialState, "", 0, startHeuristic);
+    openList.push_back(startNode);
+    push_heap(openList.begin(), openList.end());
 
 
+    // A* Search Loop
+    while (!openList.empty()) {
+        pop_heap(openList.begin(), openList.end());
+        PuzzleState currentNode = openList.back();
+        openList.pop_back();
+
+        // Check if goal state is reached
+        if (currentNode.state == goalState) {
+            pathLength = currentNode.g;
+            actualRunningTime = (float)(clock() - startTime) / CLOCKS_PER_SEC;
+            return currentNode.path; // Return the path leading to the goal
+        }
+
+        // Add to closed list
+        closedList.insert(currentNode.state);
+        numOfStateExpansions++;
+
+        // Generate successors
+        vector<pair<string, char>> successors = get_successors(currentNode.state);
+
+        // Expand each successor
+        for (const auto& [newState, move] : successors) {
+            if (closedList.find(newState) != closedList.end()) {
+                continue; // Skip if already expanded
+            }
+
+            // Compute g and h for the successor
+            int newG = currentNode.g + 1;
+
+            //check which heuristic to use
+            int newH;
+            //if misplasedTiles
+            if (heuristic == 0){
+                newH = misplacedTilesF(newState, goalState);
+            }
+            //if manhattanDistance
+            else if (heuristic==1){
+                newH = manhattanDistanceF(newState, goalState);
+            }
+
+            PuzzleState successorNode{newState,  currentNode.path + move, newG, newH};
+
+            openList.push_back(successorNode);
+            push_heap(openList.begin(), openList.end());
+
+            // Update max queue length
+            maxQLength = max(maxQLength, (int)openList.size());
+        }
+    }
+
+	actualRunningTime = ((float)(clock() - startTime)/CLOCKS_PER_SEC);                         
 	
-	
-//***********************************************************************************************************
-	actualRunningTime = ((float)(clock() - startTime)/CLOCKS_PER_SEC);                         //this seems to always return null look at it later
-	path = "DDRRLLLUUURDLUDURDLUU"; //this is just a dummy path for testing the function
-	pathLength = path.size();
 	return path;		
 		
 }
