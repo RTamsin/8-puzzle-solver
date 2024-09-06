@@ -123,6 +123,8 @@ string uc_explist(string const initialState, string const goalState, int& pathLe
                 pq.push(PuzzleState(successor, current.path + direction, current.g + 1, 0));
             }
         }
+
+        maxQLength = max(maxQLength, (int)pq.size());
     }
 	
 //***********************************************************************************************************
