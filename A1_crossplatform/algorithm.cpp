@@ -104,11 +104,20 @@ string uc_explist(string const initialState, string const goalState, int& pathLe
                                float &actualRunningTime, int &numOfDeletionsFromMiddleOfHeap, int &numOfLocalLoopsAvoided, int &numOfAttemptedNodeReExpansions){
     
     clock_t startTime = clock();;
-    priority_queue<PuzzleState> pq;
+    //priority_queue<PuzzleState> pq;
+
+    vector<PuzzleState> openList;
+    make_heap(openList.begin(), openList.end());
+
     set<string> visited;
 
-    pq.push(PuzzleState(initialState, "", 0, 0));
+    //pq.push(PuzzleState(initialState, "", 0, 0));
+    PuzzleState startNode = PuzzleState(initialState, "", 0, 0);
+    openList.push_back(startNode);
+    push_heap(openList.begin(), openList.end());
+
     visited.insert(initialState);
+
     maxQLength = 1;
     numOfStateExpansions = 0;
     numOfDeletionsFromMiddleOfHeap=0;
@@ -118,11 +127,15 @@ string uc_explist(string const initialState, string const goalState, int& pathLe
 
     string path;
 
-    while (!pq.empty()) {
+    while (!openList.empty()) {
         //maxQLength = max(maxQLength, (int)openQueue.size());
 
-        PuzzleState current = pq.top();
+        /*PuzzleState current = pq.top();
         pq.pop();
+        */
+        pop_heap(openList.begin(), openList.end());
+        PuzzleState current = openList.back();
+        openList.pop_back();
 
         if (current.state == goalState) {
             pathLength = current.g;
@@ -144,11 +157,16 @@ string uc_explist(string const initialState, string const goalState, int& pathLe
         for (const auto& [successor, direction] : successors) {
             if (visited.find(successor) == visited.end()) {
                 visited.insert(successor);
-                pq.push(PuzzleState(successor, current.path + direction, current.g + 1, 0));
+
+                //openList.push(PuzzleState(successor, current.path + direction, current.g + 1, 0));
+
+                PuzzleState successorNode{successor,  current.path + direction, current.g+1, 0};
+                openList.push_back(successorNode);
+                push_heap(openList.begin(), openList.end());
             }
         }
 
-        maxQLength = max(maxQLength, (int)pq.size());
+        maxQLength = max(maxQLength, (int)openList.size());
     }
 	
 //***********************************************************************************************************
