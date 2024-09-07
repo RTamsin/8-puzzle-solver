@@ -104,11 +104,21 @@ string uc_explist(string const initialState, string const goalState, int& pathLe
                                float &actualRunningTime, int &numOfDeletionsFromMiddleOfHeap, int &numOfLocalLoopsAvoided, int &numOfAttemptedNodeReExpansions){
     
     clock_t startTime = clock();;
-    priority_queue<PuzzleState> pq;
+    //priority_queue<PuzzleState> pq;
+
+    vector<PuzzleState> openList;
+    make_heap(openList.begin(), openList.end());
     set<string> visited;
 
-    pq.push(PuzzleState(initialState, "", 0, 0));
+    unordered_map<string, int> bestG;
+
+    openList.push_back(PuzzleState(initialState, "", 0, 0));
+    push_heap(openList.begin(), openList.end());
+
     visited.insert(initialState);
+
+     bestG[initialState] = 0;  //push initial state and initial g value
+
     maxQLength = 1;
     numOfStateExpansions = 0;
     numOfDeletionsFromMiddleOfHeap=0;
@@ -118,11 +128,12 @@ string uc_explist(string const initialState, string const goalState, int& pathLe
 
     string path;
 
-    while (!pq.empty()) {
+    while (!openList.empty()) {
         //maxQLength = max(maxQLength, (int)openQueue.size());
 
-        PuzzleState current = pq.top();
-        pq.pop();
+        pop_heap(openList.begin(), openList.end());
+        PuzzleState current = openList.back();
+        openList.pop_back();
 
         if (current.state == goalState) {
             pathLength = current.g;
@@ -141,14 +152,43 @@ string uc_explist(string const initialState, string const goalState, int& pathLe
         ++numOfStateExpansions;
         vector<pair<string, char>> successors = get_successors(current.state);
         
-        for (const auto& [successor, direction] : successors) {
-            if (visited.find(successor) == visited.end()) {
-                visited.insert(successor);
-                pq.push(PuzzleState(successor, current.path + direction, current.g + 1, 0));
+        for (const auto& [newState, move] : successors) {
+
+            if (visited.find(newState) != visited.end()) {
+                continue; // Skip if already expanded
             }
+
+            // Compute g and h for the successor
+            int newG = current.g + 1;
+
+            PuzzleState successorNode{newState,  current.path + move, newG, 0};
+
+            //check if its ever been in the queue/is in queue
+            if (bestG.find(newState) == bestG.end()){                                        //state not seen
+
+                openList.push_back(successorNode);
+                push_heap(openList.begin(), openList.end());
+
+                bestG[newState] = newG;
+
+
+            }else{                                                                             // state seen
+
+                // if dupe in queue and newstate has smaller F replace old with new                                                                                     
+                if (newG < bestG[newState]){
+                   for (auto& puzzlestate : openList) {                                       
+                        if (puzzlestate.state == newState) {
+                            puzzlestate = successorNode;
+                            numOfDeletionsFromMiddleOfHeap++;                                  //effectively deleteing a state expansion with swap
+                        }
+                    } 
+                } //doing nothing means the successor doesnt get added ever cuz its bigger f that what is in queue
+            }
+
+            
         }
 
-        maxQLength = max(maxQLength, (int)pq.size());
+        maxQLength = max(maxQLength, (int)openList.size());
     }
 	
 //***********************************************************************************************************
