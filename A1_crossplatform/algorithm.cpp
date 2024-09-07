@@ -174,30 +174,43 @@ string aStar_ExpandedList(string const initialState, string const goalState, int
     clock_t startTime = clock();;
    
     // Priority queue (min-heap) for open list
+
+    //priority_queue<PuzzleState> pq;
+    
+    
     vector<PuzzleState> openList;
     make_heap(openList.begin(), openList.end());
+    
+   
+    unordered_map<string, int> bestF; // Keeps track of the best f(n) for each unique state
     set<string> closedList;
 
     pathLength = 0;
     numOfStateExpansions = 0;
-    maxQLength = 0;
+    maxQLength = 1;
 
     //calc start node h value
     int startHeuristic;
     //if misplasedTiles
-    if (heuristic == 0){
+    if (heuristic == misplacedTiles){
         startHeuristic = misplacedTilesF(initialState, goalState);
     }
     //if manhattanDistance
-    else if (heuristic==1){
+    else if (heuristic==manhattanDistance){
         startHeuristic = manhattanDistanceF(initialState, goalState);
     }
 
-
+    bestF[initialState] = startHeuristic;  //push initial state and initialk f value
     // Push initial state into the heap with f(n) = g(n) + h(n)
     PuzzleState startNode = PuzzleState(initialState, "", 0, startHeuristic);
+
+    
     openList.push_back(startNode);
     push_heap(openList.begin(), openList.end());
+    
+   
+
+    //pq.push(PuzzleState(initialState, "", 0, 0));
 
 
     // A* Search Loop
@@ -222,6 +235,7 @@ string aStar_ExpandedList(string const initialState, string const goalState, int
 
         // Expand each successor
         for (const auto& [newState, move] : successors) {
+
             if (closedList.find(newState) != closedList.end()) {
                 continue; // Skip if already expanded
             }
@@ -232,22 +246,45 @@ string aStar_ExpandedList(string const initialState, string const goalState, int
             //check which heuristic to use
             int newH;
             //if misplasedTiles
-            if (heuristic == 0){
+            if (heuristic == misplacedTiles){
                 newH = misplacedTilesF(newState, goalState);
             }
             //if manhattanDistance
-            else if (heuristic==1){
+            else if (heuristic==manhattanDistance){
                 newH = manhattanDistanceF(newState, goalState);
             }
 
+            int newF = newH + newG;
+
             PuzzleState successorNode{newState,  currentNode.path + move, newG, newH};
 
-            openList.push_back(successorNode);
-            push_heap(openList.begin(), openList.end());
+            //check if its ever been in the queue/is in queue
+            if (bestF.find(newState) == bestF.end()){                                        //state not seen
 
-            // Update max queue length
-            maxQLength = max(maxQLength, (int)openList.size());
+                openList.push_back(successorNode);
+                push_heap(openList.begin(), openList.end());
+
+                bestF[newState] = newF;
+
+
+            }else{                                                                             // state seen
+
+                // if dupe in queue and newstate has smaller F replace old with new                                                                                     
+                if (newF < bestF[newState]){
+                   for (auto& puzzlestate : openList) {                                       
+                        if (puzzlestate.state == newState) {
+                            puzzlestate = successorNode;
+                            numOfDeletionsFromMiddleOfHeap++;                                  //effectively deleteing a state expansion with swap
+                        }
+                    } 
+                } //doing nothing means the successor doesnt get added ever cuz its bigger f that what is in queue
+            }
+
+            
         }
+        
+        // Update max queue length
+        maxQLength = max(maxQLength, (int)openList.size());
     }
 
 	actualRunningTime = ((float)(clock() - startTime)/CLOCKS_PER_SEC);                         
